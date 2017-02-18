@@ -1,0 +1,115 @@
+﻿@model Gallery.ModelViews.ImageView
+
+<div>
+    <div>
+        <hr />
+        <h4>Image details</h4>
+        <hr />
+        <dl class="dl-horizontal">
+            <dt>
+                @Html.DisplayNameFor(model => model.Image.Title)
+            </dt>
+
+            <dd>
+                @Html.DisplayFor(model => model.Image.Title)
+            </dd>
+
+            <dd>
+                <img src="@Url.Content("~/Images/" + System.IO.Path.GetFileName(Model.Image.FileName))" alt="Picture is missing." height="225" width="325">
+            </dd>
+
+            <dt>
+                @Html.DisplayNameFor(model => model.Image.Description)
+            </dt>
+
+            <dd>
+                @Html.DisplayFor(model => model.Image.Description)
+            </dd>
+        </dl>
+    </div>
+    <p><a href="#" class="editLink"> Edit details </a></p>
+
+    <div id="loadingCommentsContainer">
+    </div>
+
+    <p><a href="#" class="addCommentLink"> Add new comment </a></p>
+
+    <a href="#" class="backToImagesLink"> Back to images </a>
+
+    <script>
+        console.log("Inne i details script.");
+
+        var editItem = $("#imgEditContainer");
+        editItem.show();
+
+        var interval = null;
+
+        $(".editLink").click(function (e) {
+            console.log("click on edit link");
+            clearInterval(interval);
+            $("#loadingCommentsContainer div").empty();
+            editImage(e, "@Model.Image.ImageId", "@Model.AlbumId");
+        });
+
+        $(".addCommentLink").click(function (e) {
+            console.log("click on add comment link");
+            clearInterval(interval);
+            $("#loadingCommentsContainer div").empty();
+            commentImage(e, "@Model.Image.ImageId", "@Model.AlbumId");
+        });
+
+        $(".backToImagesLink").click(function (e) {
+            console.log("click on add comment link");
+            clearInterval(interval);
+            $("#loadingCommentsContainer div").empty();
+            $("#imgContainer").show();
+            $("#uploadContainer").show();
+            loadImages();
+            editItem.hide();
+            console.log("Back is done.");;
+        });
+
+        function editImage(e, img, albId) {
+            console.log("editImage fkn begin");
+            var container = $("#imgEditContainer");
+            var imgContainer = $("#imgContainer");
+            imgContainer.hide();
+            var t = $(e.target);
+            container.load("/Image/Edit", { imageId: "@Model.Image.ImageId", albumId: "@Model.AlbumId" });
+        }
+
+        function commentImage(e, img, albId) {
+            console.log("commentImage fkn begin");
+            var container = $("#imgEditContainer");
+            container.load("/Image/AddComment", { imageId: "@Model.Image.ImageId", albumId: "@Model.AlbumId" });
+        }
+
+        function loadComments() {
+            var container = $("#loadingCommentsContainer");
+            setTimeout(function () {
+                $.ajax('/Image/GetCommentsForImage?imageId=@Model.Image.ImageId').fail(function () {
+                    alert("Don't find image.");
+                }).done(function (data) {
+                    $("#loadingCommentsContainer div").empty();
+                    $.each(data, function (key, value) {
+                        if ($(value).length) {
+                            var d = new Date(parseInt(value.Date.substr(6)));
+                            container.append("<div>" + value.Text + "&nbsp;" + d.toLocaleString() + "</div>");
+                            //if (!$('div[data-text="' + value.Text + '"]').length) {     //Obs! Source of bugg, only text compares
+                            //     container.append("<div data-text=\"" + value.Text + "\">" + value.Text + "&nbsp;" + d.toLocaleString() + "</div>");
+                            //}
+                        }
+                    });
+                    console.log("Comments is Done.");
+                });
+            }, 1000);
+        }
+
+        $(document).ready(function () {
+            loadComments();
+            interval = setInterval(loadComments, 10000);
+        });
+
+    </script>
+</div>
+

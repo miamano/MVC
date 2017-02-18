@@ -1,0 +1,57 @@
+﻿@model Gallery.ModelViews.ImageView
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    <div class="form-horizontal">
+        <h4>Image</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @Html.HiddenFor(model => model.Image.ImageId)
+        @Html.HiddenFor(model => model.AlbumId)
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Image.Comments, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                <input type="text" id="newImgComment" name="newCommentText" placeholder="Add comments..">
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="button" id="saveButton" value="Save" class="btn btn-default" />
+                <input type="button" id="buttonCancel" value="Cancel" class="btn btn-default" />
+            </div>
+        </div>
+        <script>
+            var commentItem = $("#imgEditContainer");
+            commentItem.show();
+            $("#saveButton").click(function (e) {
+                console.log("save button clicked");
+                var albumId = $("input[id=AlbumId]").val();
+                var imgId = $("input[id=Image_ImageId]").val();    
+                var comment = $("#newImgComment").val();
+
+                $(e.target).attr('disabled', 'disabled');
+                var data = { albumId: albumId, imageId: imgId, comment: comment }; 
+                //AJAX: POST
+                $.post("/Image/AjaxAddComment", data).fail(function () {
+                    alert("Fail to comment. " + comment);
+                }).done(function (data) {
+                    var imgContainer = $("#imgContainer");
+                    imgContainer.show();
+                    commentItem.hide();
+                    loadImages();
+                    console.log("Comment is Done.");
+                });
+            });
+            $("#buttonCancel").click(function (e) {
+                console.log("cancel button clicked");
+                var imgContainer = $("#imgContainer");
+                imgContainer.show();
+                commentItem.hide();
+                loadImages();
+            });
+        </script>
+
+    </div>
+}

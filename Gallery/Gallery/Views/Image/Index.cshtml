@@ -1,0 +1,38 @@
+﻿@model Gallery.ModelViews.ImagesView
+@using Microsoft.AspNet.Identity;
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<div>
+    <h2 id="myH2"><a>Gallery</a></h2>
+    <div>
+        @if (User.Identity.IsAuthenticated)
+        {
+            @Html.ActionLink("Upload", "Upload", new { albumId = Model.Album.AlbumId })
+        }
+        @Html.ActionLink("Back to Album", "Index", "Album")
+    </div>
+    <div>
+        @foreach (var img in Model.Images)
+        {
+            <div class="float-left">
+                @Html.ActionLink("Details", "Details", new { imgId = img.ImageId, albumId = Model.Album.AlbumId }) 
+                @if (User.Identity.IsAuthenticated)
+                {
+                    @Html.ActionLink("Edit", "Edit", new { imgId = img.ImageId, albumId = Model.Album.AlbumId }) |
+                    @Html.ActionLink("Delete", "Delete", new { imgId = img.ImageId, albumId = Model.Album.AlbumId })
+                }
+                <img src="@Url.Content("~/Images/" + System.IO.Path.GetFileName(img.FileName))" alt="Picture is missing." height="225" width="325">
+                <h5 id="myH4">@Html.DisplayFor(modelItem => img.Title) | @Html.DisplayFor(modelItem => img.Description)</h5>
+            </div>
+        }
+    </div>
+    <div class="finish">
+    </div>
+    <div>
+        @Html.ActionLink("Back to Album", "Index", "Album")
+    </div>
+    <customErrors mode="On" defaultRedirect="/Home/Error" />
+</div>

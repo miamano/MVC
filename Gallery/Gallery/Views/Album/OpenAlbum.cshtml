@@ -1,0 +1,192 @@
+﻿@model Guid
+@using Microsoft.AspNet.Identity;
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<div>
+    <h2 id="myH2">Gallery</h2>
+    @if (User.Identity.IsAuthenticated)
+    {
+        <div class="form-horizontal">
+            <h4>Album comment</h4>
+            <input type="text" id="newComment" name="newCommentText" placeholder="Add comments.." class="form-control">
+            <input type="button" id="createNewAlbumComment" value="Add" class="btn btn-info" />
+            <div id="dummyContainer"></div>
+        </div>
+        <hr />
+        <div id="loadingAlbumCommentsContainer"></div>
+    }
+    <div id="imgEditContainer"></div>
+
+    <hr />
+    <div id="uploadContainer">
+        @if (User.Identity.IsAuthenticated)
+            {
+            @Html.ActionLink("Upload", "Upload", "Image", new { albumId = @Model }, new { albumId = @Model })
+        }
+        @Html.ActionLink("Back to Album", "Index", "Album")
+    </div>
+    <br />
+    <div class="container-fluid">
+        <div class="row" id="loading" style="display:none;">
+            <div class="col-lg-12">
+                <img style="max-height:56px; max-width:81px;" src="~/Images/progress.png">
+            </div>
+        </div>
+        <div id="imgContainer">
+        </div>
+    </div>
+    <div class="error">
+        @Html.ValidationMessage("error")
+    </div>
+    <div class="finish">
+    </div>
+    <customErrors mode="On" defaultRedirect="/Home/Error" />
+</div>
+
+@section Scripts {
+    <script>
+        function loadImages() {
+            if (!$("#imgContainer > div").length) {
+                $("#loading").show();
+            }
+            var userAuthorized = @User.Identity.IsAuthenticated.ToString().ToLower();
+            setTimeout(function () {
+                var alb = "@Model";
+                $.ajax('/Album/AjaxOpenAlbum/@Model').fail(function () {
+                    alert("It does not exist!");
+                }).done(function (data) {
+                    $("#loading").hide();
+                    console.log(data);
+                    //$("#myH2 a").text(data.AlbumName);
+
+                    $("#imgContainer").empty();
+
+                    $.each(data, function (i, e) {
+                        if (!$("#img-" + e).length) {
+                            console.log(e);
+                            $.ajax('/Image/AjaxGetImage/' + e).done(function (img) {
+                                console.log(img.Title);
+                                console.log(img);
+
+                                if (userAuthorized) {
+                                    $("<div id=\"img-" + img.ImageId + "\" data-id=\"" + img.ImageId + "\" class=\"col-md-4\">" +
+                                    "<a href=\"#\" class=\"imageDetailsLink\">Details </a> " + " | " +
+                                    "<a href=\"#\" class=\"imageEditLink\">Edit </a> " + " | " +
+                                    "<a href=\"#\" class=\"imageDeleteLink\">Delete</a> " +
+                                    "<img style=\"max-height:225px; max-width:325px;\" src=\"/Images/" + img.FileName + "\">" +
+                                    "<h5>" + img.Title + "</h5> " +
+                                    "<span>" + img.Description + "</span>" +
+                                    "</div>").appendTo("#imgContainer");
+                                } else {
+                                    $("<div id=\"img-" + img.ImageId + "\" data-id=\"" + img.ImageId + "\" class=\"col-md-4\">" +
+                                    "<img style=\"max-height:225px; max-width:325px;\" src=\"/Images/" + img.FileName + "\">" +
+                                    "<h5>" + img.Title + "</h5> " +
+                                    "<span>" + img.Description + "</span>" +
+                                    "</div>").appendTo("#imgContainer");
+                                }
+
+                                $("#img-" + img.ImageId + " .imageDeleteLink").click(function (e) {
+                                    console.log("click on delete button");
+                                    deleteImage(e, img, alb);
+                                });
+                                $("#img-" + img.ImageId + " .imageEditLink").click(function (e) {
+                                    console.log("click on edit button");
+                                    editImage(e, img, alb);
+                                });
+                                $("#img-" + img.ImageId + " .imageDetailsLink").click(function (e) {
+                                    console.log("click on Details button");
+                                    detailsImage(e, img, alb);
+                                });
+                            });
+                        }
+                    });
+                });
+            }, 1000);
+        }
+
+        function loadComments() {
+            var container = $("#loadingAlbumCommentsContainer");
+            console.log("Inside Comments list.");
+            setTimeout(function () {
+                $.ajax('/Album/GetCommentsForAlbum?albumId=@Model').fail(function () {
+                    alert("Don't find album.");
+                }).done(function (data) {
+                    container.empty();
+                    $.each(data, function (key, value) {
+                        if ($(value).length) {
+                            var d = new Date(parseInt(value.Date.substr(6)));
+                            container.append("<div>" + value.Text + "&nbsp" + d.toLocaleString() + "</div>");
+                        }
+                    });
+                    console.log("Comments is Done.");
+                });
+            });
+        }
+
+        function commentAlbum() {
+            console.log("BEGIN: commentAlbum fkn");
+            var commentA = $("#newComment").val();
+            $("#dummyContainer").load("/Album/AddComment", { albumId: "@Model", comment: commentA });
+            //TODO
+        }
+
+        function deleteImage(e, img, albId) {
+            console.log("In the function deleteImage");
+            var t = $(e.target);
+            var albumId = albId;
+            var imageId = img.ImageId;
+            $.post("/Image/Delete", { imageId: imageId, albumId: albumId }).fail(function () {
+                alert("Fail to delete image.");
+            }).done(function (data) {
+                //$("#imgContainer").html(data);  //TODO: Fråga Fredrik - bugg vid andra gång delete - kolla html kod
+                loadImages();
+                console.log("Done");
+            });
+        }
+
+        function editImage(e, img, albId) {
+            console.log("editAlbum fkn begin");
+            var container = $("#imgEditContainer");
+            var t = $(e.target);
+            container.load("/Image/Edit", { imageId: img.ImageId, albumId: albId });
+        }
+
+        function detailsImage(e, img, albId) {
+            console.log("detailsAlbum fkn begin");
+            $("#imgContainer").hide();
+            $("#uploadContainer").hide();
+            var container = $("#imgEditContainer");
+            container.load("/Image/Details", { imageId: img.ImageId, albumId: albId });
+        }
+
+        function uploadImage(e) {
+            console.log("uploadImage fkn begin");
+            $("#imgContainer").hide();
+            $("#uploadContainer").hide();
+            var t = $(e.target);
+            var albumId = t.data('id');
+            var container = $("#imgEditContainer").show();
+            container.load("/Image/Upload", { albumId: albumId });
+        }
+
+        $(".uploadLink").click(function (e) {
+            console.log("click on Upload link");
+            uploadImage(e);
+        });
+
+        $("#createNewAlbumComment").click(function () {
+            console.log("click on create new comment button");
+            commentAlbum();
+        });
+
+        $(document).ready(function () {
+            loadImages();
+            console.log("Inside Comments document.ready.");
+            loadComments();
+            interval = setInterval(loadComments, 10000);
+        });
+    </script>
+}

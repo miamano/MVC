@@ -1,0 +1,71 @@
+﻿@model Gallery.ModelViews.AlbumView
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+
+    <div class="form-horizontal">
+        <h4>Edit Album</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @Html.HiddenFor(model => model.Album.AlbumId)
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Album.AlbumName, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Album.AlbumName, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Album.AlbumName, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        @*<div class="form-group">
+            @Html.LabelFor(model => model.Album.Comments, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                <input type="text" id="newComment" name="newCommentText" placeholder="Add comments..">
+            </div>
+        </div>*@
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="button" id="saveButton" value="Save" class="btn btn-default" />
+                <input type="button" id="buttonCancel" value="Cancel" class="btn btn-default" />
+            </div>
+        </div>
+        <script>
+            var buttonCreateAlbum = $("#createAlbum");
+            buttonCreateAlbum.hide();
+            var editItem = $("#albumHandlerContainer");
+            editItem.show();
+            $("#saveButton").click(function (e) {
+                var id = $("input[id=Album_AlbumId]").val();
+                var name = $("input[id=Album_AlbumName]").val();
+                //var comment = $("input[id=Album_AlbumComment]").val();
+                //var comment = $("#newComment").val();
+                if (name == "") {
+                    alert("Pls, enter the name of the album.");
+                    return;
+                }
+                $(e.target).attr('disabled', 'disabled');
+                var data = { id: id, name: name};
+                //var data = { id : id, name : name, comment : comment };
+                //AJAX: POST
+                $.post("/Album/AjaxEdit", data).fail(function () {
+                    alert("Fail to post edit stuff. " + name);
+                }).done(function (data) {
+                    //var id = data;
+                    $("#listAlbumsContainer").html(data);
+                    editItem.hide();
+                    console.log("Edit is Done.");
+                    document.location.reload();
+                });
+            });
+            $("#buttonCancel").click(function (e) {
+                editItem.hide();
+                document.location.reload();
+            });
+        </script>
+    </div>
+    <div class="error">
+        @Html.ValidationMessage("error")
+    </div>
+}

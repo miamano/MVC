@@ -1,0 +1,90 @@
+﻿@model Gallery.ModelViews.AlbumView
+@using Microsoft.AspNet.Identity;
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<div>
+    <div id="albumHandlerContainer"></div>
+    <div id="listAlbumsContainer">
+
+        <h2 id="myH2"><a>Gallery</a></h2>
+        @if (User.Identity.IsAuthenticated)
+        {
+            <div id="createAlbumContainer">
+                <input type="button" id="createAlbum" value="Create new album" class="btn btn-default" />
+            </div>
+            <br />
+        }
+        <br />
+        <div>
+            @foreach (var item in Model.Albums)
+            {
+                <div class="float-left">
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <a href="#" class="editLink" data-id="@item.AlbumId"> Edit </a>
+                        <a href="#" class="deleteLink" data-id="@item.AlbumId"> Delete</a>
+                    }
+                    <a href=@Url.Action("OpenAlbum", new { albumId = item.AlbumId })><img src="@Url.Content("~/Images/" + System.IO.Path.GetFileName("folder.jpg"))" alt="Picture is missing." max-height="225" max-width="325"></a>
+                    <h4>@Html.DisplayFor(modelItem => item.AlbumName)</h4>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="error">
+        @Html.ValidationMessage("error")
+    </div>
+    <div class="finish">
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        console.log("Inside of the script.");
+        var buttonCreateAlbum = $("#createAlbum");
+        buttonCreateAlbum.show();
+
+        function deleteAlbum(e) {
+            var t = $(e.target);
+            var albumId = t.data('id');
+            $.post("/Album/Delete", { albumID: albumId }).fail(function () {
+                alert("Fail to delete item.");
+            }).done(function (data) {
+                console.log("Album Delete Done");
+                document.location.reload();
+            });
+        }
+
+        function editAlbum(e) {
+            console.log("editAlbum fkn begin");
+            var container = $("#albumHandlerContainer");
+            var t = $(e.target);
+            var albumId = t.data('id');
+            container.load("/Album/Edit", { albumID: albumId });
+        }
+
+        function createAlbum() {
+            console.log("BEGIN createAlbum fkn");
+            var container = $("#albumHandlerContainer");
+            container.load("/Album/CreateAlbum");
+        }
+
+        $(".deleteLink").click(function (e) {
+            console.log("click on delete button");
+            deleteAlbum(e);
+        });
+        $(".editLink").click(function (e) {
+            console.log("click on edit button");
+            editAlbum(e);
+        });
+        buttonCreateAlbum.click(function () {
+            console.log("click on create new album button");
+            buttonCreateAlbum.hide();
+            createAlbum();
+        });
+    </script>
+}
+
+

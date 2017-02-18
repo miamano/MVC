@@ -1,0 +1,80 @@
+﻿@model Gallery.ModelViews.ImageView
+
+@*@{
+    ViewBag.Title = "Edit";
+}*@
+
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    
+    <div class="form-horizontal">
+        <h4>Edit Image</h4>
+        <hr />
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        @Html.HiddenFor(model => model.Image.ImageId)
+        @Html.HiddenFor(model => model.AlbumId)
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Image.Title, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Image.Title, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Image.Title, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(model => model.Image.Description, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(model => model.Image.Description, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(model => model.Image.Description, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                @*<input type="submit" value="Save" class="btn btn-default" />*@
+                <input type="button" id="saveButton" value="Save" class="btn btn-default" />
+                <input type="button" id="buttonCancel" value="Back" class="btn btn-default" />
+            </div>
+        </div>
+        <script>
+            var editItem = $("#imgEditContainer");
+            editItem.show();
+            var imgContainer = $("#imgContainer");
+            imgContainer.hide();
+            var uploadContainer = $("#uploadContainer");
+            uploadContainer.hide();
+            $("#saveButton").click(function (e) {
+                var albumId = $("input[id=AlbumId]").val();
+                var imgId = $("input[id=Image_ImageId]").val();    //Can I get it another way??
+                var title = $("input[id=Image_Title]").val();
+                var description = $("input[id=Image_Description]").val();
+
+                $(e.target).attr('disabled', 'disabled');
+                var data = { albumId: albumId, imgId: imgId, title: title, description: description }; //Can I do json of that?
+
+                function editFinish() {
+                    imgContainer.show();
+                    uploadContainer.show();
+                    loadImages();
+                    editItem.hide();
+                    console.log("Edit is Done.");
+                }
+                //AJAX: POST
+                $.post("/Image/AjaxEdit", data).done(editFinish).fail(editFinish);
+            });
+            $("#buttonCancel").click(function (e) {
+                editItem.hide();
+                imgContainer.show();
+                uploadContainer.show();
+                loadImages();
+            });
+        </script>
+    </div>
+}
+
+@*<div>
+        @Html.ActionLink("Back to List", "Index", new { @Model.AlbumId })
+    </div>*@
